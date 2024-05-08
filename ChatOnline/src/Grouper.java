@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Grouper {
     private int amountOfGroups;
@@ -85,8 +86,16 @@ public class Grouper {
         }
         return true;
     }
-
+    private boolean isClusterEmpty(int clusterID){
+        for (Point point : pointsToGroup) {
+            if(point.getGroup()==clusterID){
+                return false;
+            }
+        }
+        return true;
+    }
     private void assingPointsToClosestCentroids() {
+
         for (int i = 0; i < pointsToGroup.size(); i++) {
             int groupAssigned = 1;
             double minDistance =
@@ -98,10 +107,50 @@ public class Grouper {
                 if (distance < minDistance) {
                     minDistance = distance;
                     groupAssigned = centroids.get(j).getGroupID();
+
                 }
             }
             pointsToGroup.get(i).setGroup(groupAssigned);
         }
+        balanceClustersIfSomeIsEmpty();
+    }
+    private void balanceClustersIfSomeIsEmpty(){
+        for(int i=0; i<centroids.size(); i++){
+            for(int j=0; j<centroids.size(); j++){
+                if(j!=i){
+                    if(getAmountOfMembersInCluster(centroids.get(i).getGroupID())==0){
+                        if(sameCoordinates(centroids.get(i).getCoordinates(),centroids.get(j).getCoordinates())){
+                            transferPointToADifferentCluster(centroids.get(j).getGroupID(),centroids.get(i).getGroupID());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    private void transferPointToADifferentCluster(int clusterFromID,int clusterToID){
+        for (Point point : pointsToGroup) {
+            if(point.getGroup()==clusterFromID){
+                point.setGroup(clusterToID);
+                return;
+            }
+        }
+    }
+    private boolean sameCoordinates(double[] coords1,double[] coords2){
+        for (int i = 0; i < coords1.length; i++) {
+            if(coords1[i]!=coords2[i]){
+                return false;
+            }
+        }
+        return true;
+    }
+    private int getAmountOfMembersInCluster(int clusterID){
+        int result=0;
+        for (Point point : pointsToGroup) {
+            if(point.getGroup()==clusterID){
+                result++;
+            }
+        }
+        return result;
     }
 
     private double getDistanceBetweenPoints(double[] coordinatesFirst, double[] coordinatesSecond) {
